@@ -1,0 +1,172 @@
+<html>
+    <head>
+        <style>
+          #roomname{
+            background-color: green;
+            position: absolute;
+            left: auto;
+          }
+            body{
+                background: rgb(0,0,0);
+                background: linear-gradient(90deg, rgba(0,0,0,1) 0%, rgba(82,81,77,1) 100%);   
+            }
+            h1{
+                text-align: center;
+                color:white;
+            }
+            form {
+              position: fixed;
+              bottom: 0;
+              width: 100%;
+              z-index:970;
+            }
+            form input {
+              width: 90%;
+              border-radius: 25px;
+              
+            }
+            #submitButton {
+              width: 9%;
+              border-radius: 25px;
+            }
+            .time {
+              color: red;
+              font-family: "Ubuntu";
+              text-align: right;
+            }
+        
+            .message {
+              display: inline;
+            }
+            #messages {
+                list-style-type: none;   
+            }
+            .me {
+              font-family: sans-serif, "Courier New", Courier, monospace;
+              text-align: right;
+            }
+            .you {
+              font-family: sans-serif, "Courier New", Courier, monospace;
+              text-align: left;
+             
+            }
+            .yourDiv {
+              position: relative;
+              right: 10;
+              width: 50%;
+              background-color: rgb(49, 116, 160);
+              color: white;
+              border-radius: 5px;
+              z-index:-1;
+            }
+            .myDiv {
+              position: relative;
+              left: 40%;
+              width: 50%;
+              background-color: rgb(241, 243, 245);
+              border-radius: 5px;
+              z-index:-1;
+            }
+          </style>
+    </head>
+    <body>
+       <div id="room_name"> </div>
+        <form>
+            <input type="text" id="usrMessage" />
+            <input type="submit" id="submitButton" value="Send" />
+          </form>
+          
+            <h1>ChatterBox</h1>
+            <div id="container">
+          <li id="message">
+          <ul id="messages"></ul></li>
+        </div>
+
+    
+    </body>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script
+    src="https://code.jquery.com/jquery-3.5.1.js"
+    integrity="sha256-QWo7LDvxbWT2tbbQ97B53yJnYU3WhH/C8ycbRAkjPDc="
+    crossorigin="anonymous"
+  ></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js"></script>
+    <script>
+        let userName = prompt("What's your name?");
+       let room = prompt("Enter room name:");
+       let ID = "";
+      //  let rm = "";
+       var socket = io();
+       //sending event that a new user has joined room
+       socket.emit("join room", {username : userName, roomName : room});
+
+       //receiving data from server.
+    socket.on('send data',(data)=>{
+        ID = data.id; //ID will be used later
+        // rm= data.room;
+        console.log(" my ID:" + ID);
+    })
+
+    $("#usrMessage").focus();
+    document.getElementById('usrMessage').focus()
+    //when form is submitted, capture the input value and then send it to server
+    document
+      .getElementsByTagName("form")[0]
+      .addEventListener("submit", function (event) {
+        event.preventDefault();
+        socket.emit("chat message", {
+          value: document.getElementById("usrMessage").value,
+          user: userName,
+        
+        });
+
+        document.getElementById("usrMessage").value = "";
+      });
+ socket.on("chat message", (data) => {
+      console.log(data.data.user + ": " + data.id);
+        displayMessage(data);
+    });
+
+    function displayRoomName(data){
+      document.getElementById("room_name").innerHTML = rm;
+    }
+    function displayMessage(data) {
+        let authorClass = "";
+      let divClass = ""
+      //verify that the user ID and the message sent ID is similar 
+      if (data.id === ID) {
+          console.log("This person has sent a message")
+        authorClass = "me";
+        divClass = "myDiv";
+      } else {
+        authorClass = "you";
+        divClass = "yourDiv";
+      }
+      const div = document.createElement("div");
+      div.className = divClass;
+      const li = document.createElement("li");
+      const p = document.createElement("p");
+      p.className = "time";
+      p.innerText = moment().format("hh:mm");
+      div.innerHTML =
+        '<p class="' +
+        authorClass +
+        '">' +
+        data.data.user +
+        "</p>" +
+        '<p class="message"> ' +
+        data.data.value +
+        "</p>";
+      div.appendChild(p);
+      li.appendChild(div);
+
+      document.getElementById("messages").appendChild(li);
+      //scroll to the bottom
+     //window.scrollTo(0, document.body.scrollHeight);
+     var objDiv = document.getElementById("messages");
+      objDiv.scrollTop = objDiv.scrollHeight;
+    }
+
+   </script>
+</html>
